@@ -24,6 +24,16 @@ client = TelegramClient(username, api_id, api_hash)
 async def main(phone):
     await client.start()
     print("Client Created")
+    # Ensure you're authorized
+    if not await client.is_user_authorized():
+        await client.send_code_request(phone)
+        try:
+            await client.sign_in(phone, input('Enter the code: '))
+        except SessionPasswordNeededError:
+            await client.sign_in(password=input('Password: '))
+
+    me = await client.get_me()
+
     df = pd.DataFrame()
     chats.append(input('Enter channel id: '))
     for chat in chats:

@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-client = OpenAI(api_key="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")
+client = OpenAI(api_key="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")
 
 
 # GPT-3 API call
@@ -15,7 +15,7 @@ def get_completion(prompt, model="gpt-3.5-turbo"):
 # Use GPT API
 # change max_tokens
 
-def chatGPT(prompt, model="gpt-3.5-turbo", max_tokens=75, stop=None):
+def chatGPT(prompt, model="gpt-3.5-turbo", max_tokens=300, stop=None):
     response = client.chat.completions.create(
         model=model,
         messages = [{"role": "user", "content": prompt}],  # Provide the required 'messages' argument,
