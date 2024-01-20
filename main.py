@@ -1,10 +1,12 @@
 from typing import Final
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters, ContextTypes
 
 
-TOKEN: Final = '6494789412:AAEiLTcRxAiUgR6MW0Kz37R5WHFgTZnLG2Q'
+TOKEN: Final = '6738604120:AAH5F4XeRj8tG2zyoQZHnbp_ZmqmupCXkS8'
 BOT_USERNAME: Final = '@TLGRM_GPTbot'
+
+ENTER_PHONE, ENTER_CODE = range(2)
 
 # commands
 
@@ -12,7 +14,8 @@ BOT_USERNAME: Final = '@TLGRM_GPTbot'
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Welcome to TELGRM_GPT!\n"
                                     "I can summarize chats from your channels!\n"
-                                    "Use /help for a full list of commands")
+                                    "Please enter your phone number registered with telegram to start")
+    return ENTER_PHONE
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,41 +41,29 @@ def handle_response(text: str) -> str:
     return 'what?'
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message_type: str = update.message.chat.type
-    text: str = update.message.text
-
-    print(f'User ({update.message.chat.id}) in {message_type}: "{text}')
-
-    if message_type == 'group':
-        if BOT_USERNAME in text:
-            new_text: str = text.replace(BOT_USERNAME, '').strip()
-            response: str = handle_response(new_text)
-        else:
-            return
-    else:
-        response: str = handle_response(text)
-
-    print('Bot: ', response)
-    await update.message.reply_text(response)
+async def enter_phone_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["phone_number"] = update.message.text
+    await update.message.reply_text("Please enter the code sent to you")
+    return ENTER_CODE
 
 
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f'Update {update} cause error {context.error}')
-
+async def enter_code_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["code"] = update.message.text
+    return ConversationHandler.END
 
 if __name__ == '__main__':
     print('starting bot')
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler('start', start_command))
-    app.add_handler(CommandHandler('help', help_command))
-
-    app.add_handler((MessageHandler(filters.TEXT, handle_message)))
-
-    app.add_error_handler(error)
-
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start_command)],
+        states={
+            ENTER_PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_phone_handler)],
+            ENTER_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_code_handler)]
+        },
+        fallbacks=[]
+    )
+    app.add_handler(conv_handler)
     print('polling')
-    app.run_polling(poll_interval=3)
-
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
