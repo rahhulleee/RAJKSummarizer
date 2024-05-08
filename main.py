@@ -58,9 +58,6 @@ def handle_response(text: str) -> str:
     if 'hello' in processed:
         return 'Hey!'
 
-    if 'ur mother' in processed:
-        return 'no ur mother'
-
     return 'what?'
 
 
